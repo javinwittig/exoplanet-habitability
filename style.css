@@ -1,0 +1,172 @@
+:root {
+  --bg: #090c14;
+  --panel: #10152444;
+  --line: #232a3d;
+  --text: #eef1f7;
+  --text-muted: #8a92ab;
+  --amber: #e8b657;
+  --teal: #4fc7a3;
+  --rose: #b56271;
+
+  --font-display: "Fraunces", serif;
+  --font-mono: "IBM Plex Mono", monospace;
+  --font-body: "Inter", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  scroll-behavior: smooth;
+}
+
+/* ---------- Fixed starfield ---------- */
+
+#stage {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+#sky {
+  width: 100%;
+  height: 100%;
+}
+
+.dot {
+  fill: #3a4054;
+  transition: fill 0.6s ease, opacity 0.6s ease, r 0.6s ease;
+}
+
+.dot.predicted {
+  fill: var(--amber);
+}
+
+.dot.correct {
+  fill: var(--teal);
+}
+
+.dot.false-alarm {
+  fill: #3a4054;
+  opacity: 0.35;
+}
+
+.axis-label {
+  position: absolute;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+#axis-x-label, #axis-y-label { display: none; }
+
+/* ---------- Mission log rail ---------- */
+
+#log {
+  position: fixed;
+  top: 2.5rem;
+  right: 3rem;
+  z-index: 5;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  min-width: 15rem;
+}
+
+.log-heading {
+  color: var(--text-muted);
+  letter-spacing: 0.12em;
+  margin-bottom: 0.9rem;
+  font-size: 0.68rem;
+}
+
+.log-row {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr auto;
+  gap: 0.6rem;
+  align-items: baseline;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--line);
+  color: var(--text-muted);
+  transition: color 0.4s ease;
+}
+
+.log-row.active {
+  color: var(--text);
+}
+
+.log-index { color: #4a5170; }
+.log-row.active .log-index { color: var(--amber); }
+.log-row[data-row="2"].active .log-index { color: var(--teal); }
+
+.log-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* ---------- Scroll steps ---------- */
+
+main {
+  position: relative;
+  z-index: 2;
+}
+
+.step, .step-end {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  padding: 0 3rem;
+}
+
+.card {
+  max-width: 30rem;
+  background: linear-gradient(180deg, rgba(9,12,20,0.92), rgba(9,12,20,0.75));
+  backdrop-filter: blur(6px);
+  border-left: 2px solid var(--amber);
+  padding: 1.8rem 2rem;
+}
+
+.step[data-step="2"] .card { border-left-color: var(--teal); }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 0.8rem;
+}
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  line-height: 1.15;
+  margin: 0 0 1rem;
+}
+
+.lede {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.step-end .card { border-left-color: var(--line); }
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 720px) {
+  #log { display: none; }
+  .step, .step-end { padding: 0 1.2rem; }
+  .card { max-width: none; }
+  #axis-x-label, #axis-y-label { display: none; }
+}
