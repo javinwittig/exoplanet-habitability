@@ -1,23 +1,24 @@
 const SVG_NS = "http://www.w3.org/2000/svg";
 const sky = document.getElementById("sky");
 
-const DATA_FILE = "planets.json";       // <- deine echten Notebook-Ergebnisse
-const FALLBACK_FILE = "planets_sample.json"; // <- Demo-Daten, falls planets.json fehlt
+const DATA_FILE = "planets.json";
+const FALLBACK_FILE = "planets_sample.json";
 
 let planets = [];
+let currentStep = -1;
 
 async function loadData() {
   try {
     const res = await fetch(DATA_FILE);
     if (!res.ok) throw new Error("not found");
     planets = await res.json();
-    console.log(`${planets.length} Planeten aus ${DATA_FILE} geladen.`);
+    console.log(`${planets.length} planets loaded from ${DATA_FILE}.`);
   } catch (e) {
     const res = await fetch(FALLBACK_FILE);
     planets = await res.json();
     console.warn(
-      `${DATA_FILE} nicht gefunden — zeige Demo-Daten (${FALLBACK_FILE}). ` +
-      `Exportiere deine echten Ergebnisse aus dem Notebook, um sie zu ersetzen.`
+      `${DATA_FILE} not found — showing demo data (${FALLBACK_FILE}). ` +
+      `Export your real results from the notebook to replace it.`
     );
   }
 }
@@ -58,6 +59,9 @@ function renderPlanets() {
 }
 
 function applyStep(step) {
+  if (step === currentStep) return;
+  currentStep = step;
+
   const total = planets.length;
   const predicted = planets.filter((p) => p.predicted_habitable).length;
   const correct = planets.filter((p) => p.predicted_habitable && p.actual_habitable).length;
@@ -67,7 +71,8 @@ function applyStep(step) {
   document.getElementById("count-correct").textContent = step >= 2 ? correct : "—";
 
   document.querySelectorAll(".log-row").forEach((row) => {
-    row.classList.toggle("active", Number(row.dataset.row) <= step);
+    const rowStep = Number(row.dataset.row);
+    row.classList.toggle("active", rowStep <= Math.min(step, 2));
   });
 
   document.querySelectorAll(".dot").forEach((dot) => {
@@ -82,6 +87,26 @@ function applyStep(step) {
   });
 }
 
+function animateCounters() {
+  document.querySelectorAll(".matrix-value[data-target]").forEach((el) => {
+    const target = parseInt(el.dataset.target, 10);
+    if (el.dataset.animated === "true") return;
+    el.dataset.animated = "true";
+
+    const duration = 800;
+    const start = performance.now();
+
+    function tick(now) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.round(target * eased).toLocaleString();
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
 function setupScroll() {
   const steps = document.querySelectorAll(".step");
   const observer = new IntersectionObserver(
@@ -92,22 +117,42 @@ function setupScroll() {
         }
       });
     },
-    { threshold: 0.55 }
+    { threshold: 0.4 }
   );
   steps.forEach((s) => observer.observe(s));
 
-  // scrolling past the last step keeps everything in the final revealed state
   const end = document.querySelector(".step-end");
   const endObserver = new IntersectionObserver(
-    (entries) => entries.forEach((e) => { if (e.isIntersecting) applyStep(2); }),
+    (entries) => entries.forEach((e) => {
+      if (e.isIntersecting) {
+        applyStep(2);
+        currentStep = -1;
+      }
+    }),
     { threshold: 0.3 }
   );
   endObserver.observe(end);
+
+  const matrixSection = document.querySelector(".step-matrix");
+  if (matrixSection) {
+    const matrixObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            animateCounters();
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+    matrixObserver.observe(matrixSection);
+  }
 }
 
-(async function init() {
-  await loadData();
-  renderPlanets();
-  applyStep(0);
-  setupScroll();
+(function init() {
+  loadData().then(() => {
+    renderPlanets();
+    applyStep(0);
+    setupScroll();
+  });
 })();

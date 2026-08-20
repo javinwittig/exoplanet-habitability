@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Habitable Worlds — Ein Exoplaneten-Katalog</title>
+<title>Habitable Worlds — An Exoplanet Catalog</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500&display=swap" rel="stylesheet">
@@ -14,61 +14,200 @@
   <!-- Fixed background: the star catalog itself -->
   <div id="stage">
     <svg id="sky" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet"></svg>
-    <div id="axis-x-label" class="axis-label">Einstrahlung (log, Erdwerte) →</div>
-    <div id="axis-y-label" class="axis-label">↑ Planetenradius (Erdradien)</div>
+    <div id="axis-x-label" class="axis-label">Insolation (log, Earth units) →</div>
+    <div id="axis-y-label" class="axis-label">↑ Planet Radius (Earth radii)</div>
   </div>
 
   <!-- Mission log rail: sits on top, tracks progress -->
   <aside id="log">
-    <div class="log-heading">MISSIONSPROTOKOLL</div>
+    <div class="log-heading">MISSION LOG</div>
     <div class="log-row" data-row="0">
       <span class="log-index">01</span>
-      <span class="log-text">Katalog geladen</span>
+      <span class="log-text">Catalog Loaded</span>
       <span class="log-count" id="count-total">—</span>
     </div>
     <div class="log-row" data-row="1">
       <span class="log-index">02</span>
-      <span class="log-text">Modell-Kandidaten</span>
+      <span class="log-text">Model Candidates</span>
       <span class="log-count" id="count-predicted">—</span>
     </div>
     <div class="log-row" data-row="2">
       <span class="log-index">03</span>
-      <span class="log-text">Bestätigt habitabel</span>
+      <span class="log-text">Confirmed Habitable</span>
       <span class="log-count" id="count-correct">—</span>
     </div>
   </aside>
 
   <!-- Scroll steps -->
   <main>
+    <!-- Step 0: The Catalog -->
     <section class="step" data-step="0">
       <div class="card">
-        <p class="eyebrow">Schritt 01 — Der Katalog</p>
-        <h1>1&#8202;715 bekannte Exoplaneten.</h1>
-        <p class="lede">Jeder Punkt ist eine reale, bestätigte Welt aus dem NASA Exoplanet Archive. Ihre Position verrät zwei Dinge über sie: wie viel Sternenlicht sie abbekommen, und wie groß sie sind.</p>
+        <p class="eyebrow">Step 01 — The Catalog</p>
+        <h1>1&#8202;715 known exoplanets.</h1>
+        <p class="lede">Every dot on this screen is a real, confirmed world discovered beyond our solar system — sourced directly from the NASA Exoplanet Archive. Two measurements define whether each of these planets could support life: <strong>how much starlight it receives</strong> (insolation) and <strong>how large it is</strong> (radius in Earth units).</p>
+        <div class="detail-box">
+          <p class="detail-title">Why these two values?</p>
+          <p class="detail-text">A planet's radius tells us whether it's rocky like Earth or a gas giant like Jupiter. Insolation — the energy it gets from its star — tells us whether surface water could exist as liquid. Together, they define the <em>Habitable Zone</em>: the narrow band where life as we know it might be possible.</p>
+        </div>
       </div>
     </section>
 
+    <!-- Step 1: The Prediction -->
     <section class="step" data-step="1">
       <div class="card">
-        <p class="eyebrow">Schritt 02 — Die Vorhersage</p>
-        <h1>Ein Random-Forest-Modell sucht nach Kandidaten.</h1>
-        <p class="lede">Ohne Einstrahlung oder Radius direkt zu kennen — nur anhand von Umlaufzeit, Sternmasse und -temperatur — markiert das Modell, welche Planeten es für potenziell habitabel hält.</p>
+        <p class="eyebrow">Step 02 — The Prediction</p>
+        <h1>A Random Forest searches for candidates.</h1>
+        <p class="lede">Here's the twist: the model never sees insolation or radius directly. Instead, it only uses <strong>seven stellar and orbital features</strong> — orbital period, planet mass, star temperature, surface gravity, star radius, star mass, and visual magnitude — to predict whether a planet falls in the habitable zone.</p>
+        <div class="detail-box">
+          <p class="detail-title">Why hide the obvious features?</p>
+          <p class="detail-text">This is a realistic scenario. When astronomers discover a new exoplanet, they often don't yet have precise radius or insolation measurements. But they <em>do</em> have data about the host star and the planet's orbit. The model learns to infer habitability from these indirect signals — mimicking how real exoplanet surveys work.</p>
+        </div>
+        <div class="feature-grid">
+          <div class="feature-tag">Orbital Period</div>
+          <div class="feature-tag">Planet Mass</div>
+          <div class="feature-tag">Star Temperature</div>
+          <div class="feature-tag">Surface Gravity</div>
+          <div class="feature-tag">Star Radius</div>
+          <div class="feature-tag">Star Mass</div>
+          <div class="feature-tag">Visual Magnitude</div>
+        </div>
       </div>
     </section>
 
+    <!-- Step 2: The Confirmation -->
     <section class="step" data-step="2">
       <div class="card">
-        <p class="eyebrow">Schritt 03 — Die Bestätigung</p>
-        <h1>Welche Vorhersagen stimmen wirklich?</h1>
-        <p class="lede">Abgeglichen mit den tatsächlichen Kriterien leuchten die echten Treffer auf. Der Rest waren falsche Alarme — der Preis für ein Modell, das lieber einmal zu oft sucht, als eine Welt zu übersehen.</p>
+        <p class="eyebrow">Step 03 — The Confirmation</p>
+        <h1>Which predictions actually hold up?</h1>
+        <p class="lede">Now we cross-reference the model's predictions against the <em>actual</em> habitability criteria (insolation between 0.25–1.5 and radius between 0.5–1.6 Earth radii). The teal dots are <strong>true hits</strong> — planets the model correctly identified. The faded dots were <strong>false alarms</strong>: the model was cautious, flagging too many rather than risking to miss a potentially habitable world.</p>
+        <div class="detail-box">
+          <p class="detail-title">The precision-recall tradeoff</p>
+          <p class="detail-text">We chose a threshold of <strong>0.17</strong> (instead of the default 0.5) to maximize <em>recall</em> — catching 80% of truly habitable planets at the cost of more false positives. In astrobiology, missing a habitable world is worse than investigating a false lead.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 3: Model Performance — Confusion Matrix -->
+    <section class="step step-matrix" data-step="3">
+      <div class="card card-wide">
+        <p class="eyebrow">Step 04 — Model Performance</p>
+        <h1>The Confusion Matrix</h1>
+        <p class="lede">This matrix breaks down every prediction the model made on the test set. Hover over each cell to understand what it represents.</p>
+
+        <div class="matrix-container">
+          <div class="matrix-axis-label matrix-axis-top">Predicted Not Habitable &nbsp;&nbsp;|&nbsp;&nbsp; Predicted Habitable</div>
+          <div class="matrix-wrapper">
+            <div class="matrix-axis-label matrix-axis-left">Actually Not Habitable</div>
+            <div class="matrix-grid">
+              <div class="matrix-cell tn" data-quadrant="tn">
+                <div class="matrix-value" data-target="1688">0</div>
+                <div class="matrix-label">True Negatives</div>
+                <div class="matrix-tooltip">
+                  <strong>True Negatives (1,688)</strong><br>
+                  Correctly identified as NOT habitable. These planets fall outside the habitable zone — too hot, too cold, or too large. The model correctly ignored them.
+                </div>
+              </div>
+              <div class="matrix-cell fp" data-quadrant="fp">
+                <div class="matrix-value" data-target="17">0</div>
+                <div class="matrix-label">False Positives</div>
+                <div class="matrix-tooltip">
+                  <strong>False Positives (17)</strong><br>
+                  Predicted as habitable, but actually aren't. These are "false alarms" — the model was too optimistic. The low threshold (0.17) intentionally increases this number to avoid missing real candidates.
+                </div>
+              </div>
+              <div class="matrix-cell fn" data-quadrant="fn">
+                <div class="matrix-value" data-target="2">0</div>
+                <div class="matrix-label">False Negatives</div>
+                <div class="matrix-tooltip">
+                  <strong>False Negatives (2)</strong><br>
+                  Actually habitable, but the model missed them. Only 2 out of 10 truly habitable planets were overlooked — a recall rate of 80%. These edge cases are the hardest to catch.
+                </div>
+              </div>
+              <div class="matrix-cell tp" data-quadrant="tp">
+                <div class="matrix-value" data-target="8">0</div>
+                <div class="matrix-label">True Positives</div>
+                <div class="matrix-tooltip">
+                  <strong>True Positives (8)</strong><br>
+                  The stars of the show. These 8 planets are both predicted as habitable AND actually meet the habitability criteria. The model successfully found them using only indirect stellar features.
+                </div>
+              </div>
+            </div>
+            <div class="matrix-axis-label matrix-axis-right">Actually Habitable</div>
+          </div>
+        </div>
+
+        <div class="metric-row">
+          <div class="metric">
+            <div class="metric-value">99%</div>
+            <div class="metric-label">Accuracy</div>
+            <div class="metric-detail">Overall correct predictions across all 1,715 planets</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">80%</div>
+            <div class="metric-label">Recall</div>
+            <div class="metric-detail">Percentage of truly habitable planets the model caught</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">32%</div>
+            <div class="metric-label">Precision</div>
+            <div class="metric-detail">Of all flagged candidates, how many were actually habitable</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">0.17</div>
+            <div class="metric-label">Threshold</div>
+            <div class="metric-detail">Custom cutoff chosen to prioritize recall over precision</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Step 4: Methodology -->
+    <section class="step step-method" data-step="4">
+      <div class="card card-wide">
+        <p class="eyebrow">Step 05 — How It Works</p>
+        <h1>The Pipeline</h1>
+        <p class="lede">The model is a scikit-learn Pipeline with three stages, designed to handle real-world data with missing values.</p>
+
+        <div class="pipeline">
+          <div class="pipeline-step">
+            <div class="pipeline-number">1</div>
+            <div class="pipeline-content">
+              <h3>SimpleImputer</h3>
+              <p>Replaces missing values with the median of each feature. Real astronomical data is full of gaps — not every measurement is available for every star.</p>
+            </div>
+          </div>
+          <div class="pipeline-connector"></div>
+          <div class="pipeline-step">
+            <div class="pipeline-number">2</div>
+            <div class="pipeline-content">
+              <h3>StandardScaler</h3>
+              <p>Normalizes all features to zero mean and unit variance. Star temperatures (thousands of Kelvin) and orbital periods (days to years) live on completely different scales — scaling puts them on equal footing.</p>
+            </div>
+          </div>
+          <div class="pipeline-connector"></div>
+          <div class="pipeline-step">
+            <div class="pipeline-number">3</div>
+            <div class="pipeline-content">
+              <h3>RandomForestClassifier</h3>
+              <p>An ensemble of 100 decision trees, each trained on a random subset of the data. With <code>class_weight="balanced"</code>, the model upweights the rare habitable class (only 0.6% of all planets) to prevent it from being drowned out by the overwhelming majority of non-habitable worlds.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-box">
+          <p class="detail-title">Why a custom threshold?</p>
+          <p class="detail-text">The default classification threshold of 0.5 is often suboptimal for imbalanced datasets. We used precision-recall curves on a validation set to find the threshold (0.17) that achieves at least 90% recall — ensuring we catch most habitable candidates while keeping false positives manageable.</p>
+        </div>
       </div>
     </section>
 
     <section class="step-end">
       <div class="card">
-        <p class="eyebrow">Ende des Protokolls</p>
-        <h1>Zurück zum Anfang scrollen, um es erneut zu sehen.</h1>
-        <p class="lede"><a href="https://github.com/javinwittig/Nasa_Exoplanet" target="_blank" rel="noopener" style="color: var(--amber); text-decoration: underline;">→ Zum GitHub-Repo: Nasa_Exoplanet</a></p>
+        <p class="eyebrow">End of Log</p>
+        <h1>Scroll back up to see it again.</h1>
+        <p class="lede">This project accompanies a Jupyter Notebook that walks through the entire ML pipeline — from querying the NASA Exoplanet Archive API to training and evaluating the model.</p>
+        <p class="lede" style="margin-top: 1rem;"><a href="https://github.com/javinwittig/Nasa_Exoplanet" target="_blank" rel="noopener" style="color: var(--amber); text-decoration: underline;">→ View the Notebook on GitHub</a></p>
       </div>
     </section>
   </main>
