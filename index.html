@@ -62,14 +62,33 @@
       <div class="card">
         <p class="eyebrow">Step 01 — The Catalog</p>
         <h1>1&#8202;715 known exoplanets.</h1>
-        <p class="lede">Every dot on this screen is a real, confirmed world discovered beyond our solar system — sourced directly from the <strong>NASA Exoplanet Archive</strong> via its TAP API. The data is queried as a SQL statement against the <code>pscomppars</code> table, pulling nine measurements for each planet: orbital period, mass, insolation, radius, and five stellar properties.</p>
-        <div class="detail-box">
-          <p class="detail-title">The raw query</p>
-          <p class="detail-text"><code>SELECT pl_orbper, pl_bmasse, pl_insol, pl_rade, st_teff, st_logg, st_rad, st_mass, sy_vmag FROM pscomppars</code> — this fetches every confirmed planet with complete measurements. After dropping rows with missing values in the key columns (insolation, radius), we're left with 1,715 worlds.</p>
+        <p class="lede">Every dot on this screen is a real, confirmed world discovered beyond our solar system — sourced directly from the <strong>NASA Exoplanet Archive</strong> via its TAP API. The data is queried as a SQL statement against the <code>pscomppars</code> table.</p>
+        <div class="code-block">
+          <div class="code-header">Notebook — Data Loading</div>
+          <pre><code>query = """
+SELECT pl_orbper, pl_bmasse, pl_insol, pl_rade,
+       st_teff, st_logg, st_rad, st_mass, sy_vmag
+FROM pscomppars
+"""
+url = "https://exoplanetarchive.ipac.caltech.edu/TAP/sync"
+r = requests.get(url, params={"query": query, "format": "csv"})
+df = pd.read_csv(io.StringIO(r.text))</code></pre>
         </div>
         <div class="detail-box">
-          <p class="detail-title">Defining "habitable"</p>
-          <p class="detail-text">A planet is labeled habitable if its insolation falls between <strong>0.25–1.5</strong> Earth units and its radius between <strong>0.5–1.6</strong> Earth radii. This captures the classic Habitable Zone: warm enough for liquid water, small enough to be rocky. Only <strong>0.6%</strong> of all planets meet these criteria — an extreme class imbalance the model has to deal with.</p>
+          <p class="detail-title">From 5,715 to 1,715</p>
+          <p class="detail-text">The archive returns 5,715 confirmed planets — but not all have complete measurements. We drop rows where insolation or radius is missing, leaving <strong>1,715 planets</strong> with the data we need. Then we create the target label: a planet is "habitable" if <code>pl_insol</code> is between 0.25–1.5 and <code>pl_rade</code> is between 0.5–1.6.</p>
+        </div>
+        <div class="code-block">
+          <div class="code-header">Notebook — Label Creation</div>
+          <pre><code>df["habitable"] = (
+    (df["pl_insol"].between(0.25, 1.5)) &
+    (df["pl_rade"].between(0.5, 1.6))
+).astype(int)
+
+# Only 0.6% are habitable — extreme imbalance
+print(y.value_counts(normalize=True))
+# 0    0.994
+# 1    0.006</code></pre>
         </div>
       </div>
     </section>
@@ -79,19 +98,33 @@
       <div class="card">
         <p class="eyebrow">Step 02 — The Prediction</p>
         <h1>A Random Forest searches for candidates.</h1>
-        <p class="lede">Here's the twist: the model never sees insolation or radius directly. Instead, it only uses <strong>seven stellar and orbital features</strong> — orbital period, planet mass, star temperature, surface gravity, star radius, star mass, and visual magnitude — to predict whether a planet falls in the habitable zone.</p>
+        <p class="lede">Here's the twist: the model never sees insolation or radius directly. Instead, it only uses <strong>seven stellar and orbital features</strong> to predict whether a planet falls in the habitable zone.</p>
+        <div class="code-block">
+          <div class="code-header">Notebook — Feature Selection</div>
+          <pre><code>X = df[["pl_orbper", "pl_bmasse", "st_teff",
+        "st_logg", "st_rad", "st_mass", "sy_vmag"]]
+y = df["habitable"]
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.3, random_state=42, stratify=y
+)</code></pre>
+        </div>
+        <div class="feature-grid">
+          <div class="feature-tag"><span class="tag-var">pl_orbper</span> Orbital Period</div>
+          <div class="feature-tag"><span class="tag-var">pl_bmasse</span> Planet Mass</div>
+          <div class="feature-tag"><span class="tag-var">st_teff</span> Star Temperature</div>
+          <div class="feature-tag"><span class="tag-var">st_logg</span> Surface Gravity</div>
+          <div class="feature-tag"><span class="tag-var">st_rad</span> Star Radius</div>
+          <div class="feature-tag"><span class="tag-var">st_mass</span> Star Mass</div>
+          <div class="feature-tag"><span class="tag-var">sy_vmag</span> Visual Magnitude</div>
+        </div>
         <div class="detail-box">
           <p class="detail-title">Why hide the obvious features?</p>
           <p class="detail-text">This is a realistic scenario. When astronomers discover a new exoplanet, they often don't yet have precise radius or insolation measurements. But they <em>do</em> have data about the host star and the planet's orbit. The model learns to infer habitability from these indirect signals — mimicking how real exoplanet surveys work.</p>
         </div>
-        <div class="feature-grid">
-          <div class="feature-tag">Orbital Period</div>
-          <div class="feature-tag">Planet Mass</div>
-          <div class="feature-tag">Star Temperature</div>
-          <div class="feature-tag">Surface Gravity</div>
-          <div class="feature-tag">Star Radius</div>
-          <div class="feature-tag">Star Mass</div>
-          <div class="feature-tag">Visual Magnitude</div>
+        <div class="detail-box">
+          <p class="detail-title">The 70/30 split</p>
+          <p class="detail-text">The data is split with <code>test_size=0.3, stratify=y</code> — 70% for training, 30% for testing, while preserving the ratio of habitable to non-habitable planets in both sets. Without stratification, the test set might end up with zero habitable planets by chance.</p>
         </div>
       </div>
     </section>
@@ -101,10 +134,28 @@
       <div class="card">
         <p class="eyebrow">Step 03 — The Confirmation</p>
         <h1>Which predictions actually hold up?</h1>
-        <p class="lede">Now we cross-reference the model's predictions against the <em>actual</em> habitability criteria (insolation between 0.25–1.5 and radius between 0.5–1.6 Earth radii). The teal dots are <strong>true hits</strong> — planets the model correctly identified. The faded dots were <strong>false alarms</strong>: the model was cautious, flagging too many rather than risking to miss a potentially habitable world.</p>
+        <p class="lede">Now we cross-reference the model's predictions against the <em>actual</em> habitability criteria. The teal dots are <strong>true hits</strong> — planets the model correctly identified. The faded dots were <strong>false alarms</strong>.</p>
+        <div class="code-block">
+          <div class="code-header">Notebook — Threshold Selection</div>
+          <pre><code># Split training data further for validation
+X_tr, X_val, y_tr, y_val = train_test_split(
+    X_train, y_train, test_size=0.25,
+    random_state=42, stratify=y_train
+)
+
+model.fit(X_tr, y_tr)
+y_val_proba = model.predict_proba(X_val)[:, 1]
+
+# Find threshold that achieves ≥ 90% recall
+precision, recall, thresholds = precision_recall_curve(y_val, y_val_proba)
+target_recall = 0.9
+valid_idx = np.where(recall >= target_recall)[0]
+chosen_threshold = thresholds[min(valid_idx[-1], len(thresholds)-1)]
+# → Cutoff: 0.1700</code></pre>
+        </div>
         <div class="detail-box">
           <p class="detail-title">The precision-recall tradeoff</p>
-          <p class="detail-text">We chose a threshold of <strong>0.17</strong> (instead of the default 0.5) to maximize <em>recall</em> — catching 80% of truly habitable planets at the cost of more false positives. In astrobiology, missing a habitable world is worse than investigating a false lead.</p>
+          <p class="detail-text">The default threshold of 0.5 assumes balanced classes — but here, only 0.6% of planets are habitable. At 0.5, the model would predict <em>nothing</em> as habitable. By lowering the threshold to <strong>0.17</strong>, we force the model to be more generous, catching 80% of truly habitable planets at the cost of more false positives. In astrobiology, missing a habitable world is worse than investigating a false lead.</p>
         </div>
       </div>
     </section>
@@ -114,7 +165,16 @@
       <div class="card card-wide">
         <p class="eyebrow">Step 04 — Model Performance</p>
         <h1>The Confusion Matrix</h1>
-        <p class="lede">This matrix breaks down every prediction the model made on the test set. Hover over each cell to understand what it represents.</p>
+        <p class="lede">This matrix breaks down every prediction the model made on the 1,715-planet test set. Hover over each cell to understand what it represents.</p>
+        <div class="code-block">
+          <div class="code-header">Notebook — Evaluation</div>
+          <pre><code>final_preds = (y_test_proba >= chosen_threshold).astype(int)
+print(classification_report(y_test, final_preds, zero_division=0))
+#               precision    recall  f1-score   support
+#            0       1.00      0.99      0.99      1705
+#            1       0.32      0.80      0.46        10
+#     accuracy                           0.99      1715</code></pre>
+        </div>
 
         <div class="matrix-container">
           <div class="matrix-axis-label matrix-axis-top">Predicted Not Habitable &nbsp;&nbsp;|&nbsp;&nbsp; Predicted Habitable</div>
@@ -188,22 +248,35 @@
       <div class="card card-wide">
         <p class="eyebrow">Step 05 — How It Works</p>
         <h1>The Pipeline</h1>
-        <p class="lede">The model is a scikit-learn Pipeline with three stages, designed to handle real-world data with missing values.</p>
+        <p class="lede">The model is a scikit-learn Pipeline — a chained sequence of transformers and a final estimator. Each step feeds its output into the next, ensuring no data leakage between training and testing.</p>
+        <div class="code-block">
+          <div class="code-header">Notebook — Model Definition</div>
+          <pre><code>model = make_pipeline(
+    SimpleImputer(strategy="median"),
+    StandardScaler(),
+    RandomForestClassifier(
+        n_estimators=100,
+        class_weight="balanced",
+        random_state=42
+    )
+)
+model.fit(X_train, y_train)</code></pre>
+        </div>
 
         <div class="pipeline">
           <div class="pipeline-step">
             <div class="pipeline-number">1</div>
             <div class="pipeline-content">
-              <h3>SimpleImputer</h3>
-              <p>Replaces missing values with the median of each feature. Real astronomical data is full of gaps — not every measurement is available for every star.</p>
+              <h3>SimpleImputer(strategy="median")</h3>
+              <p>Astronomical data is riddled with missing values — not every star has a measured surface gravity or visual magnitude. This step fills NaN values with the <em>median</em> of each feature (more robust to outliers than the mean). It's fitted only on training data, then applied to test data to prevent leakage.</p>
             </div>
           </div>
           <div class="pipeline-connector"></div>
           <div class="pipeline-step">
             <div class="pipeline-number">2</div>
             <div class="pipeline-content">
-              <h3>StandardScaler</h3>
-              <p>Normalizes all features to zero mean and unit variance. Star temperatures (thousands of Kelvin) and orbital periods (days to years) live on completely different scales — scaling puts them on equal footing.</p>
+              <h3>StandardScaler()</h3>
+              <p>Transforms each feature to zero mean and unit variance. Without this, the Random Forest would still work (tree-based models are scale-invariant), but the imputer and scaler together ensure clean, normalized input — and it matters if you ever swap in a distance-based model like SVM or KNN.</p>
             </div>
           </div>
           <div class="pipeline-connector"></div>
@@ -211,14 +284,18 @@
             <div class="pipeline-number">3</div>
             <div class="pipeline-content">
               <h3>RandomForestClassifier</h3>
-              <p>An ensemble of 100 decision trees, each trained on a random subset of the data. With <code>class_weight="balanced"</code>, the model upweights the rare habitable class (only 0.6% of all planets) to prevent it from being drowned out by the overwhelming majority of non-habitable worlds.</p>
+              <p>An ensemble of <strong>100 decision trees</strong>, each trained on a bootstrap sample of the data and a random subset of features. The final prediction is the majority vote of all trees. Key parameter: <code>class_weight="balanced"</code> automatically upweights the rare habitable class by a factor of ~178× (1/0.006), preventing the model from simply predicting "not habitable" for everything.</p>
             </div>
           </div>
         </div>
 
         <div class="detail-box">
-          <p class="detail-title">Why a custom threshold?</p>
-          <p class="detail-text">The default classification threshold of 0.5 is often suboptimal for imbalanced datasets. We used precision-recall curves on a validation set to find the threshold (0.17) that achieves at least 90% recall — ensuring we catch most habitable candidates while keeping false positives manageable.</p>
+          <p class="detail-title">Why "balanced" class weights?</p>
+          <p class="detail-text">With only 32 habitable planets out of 5,715, a naïve model would achieve 99.4% accuracy by always predicting "not habitable" — while finding zero habitable worlds. <code>class_weight="balanced"</code> penalizes misclassifying the rare class 178× more than the common class, forcing the model to take habitability seriously.</p>
+        </div>
+        <div class="detail-box">
+          <p class="detail-title">The export to JSON</p>
+          <p class="detail-text">After evaluation, the model's predictions on the full dataset are exported as <code>planets.json</code> — each record containing the planet's name, insolation, radius, actual label, predicted probability, and final prediction. This file is what powers the interactive visualization you're scrolling through right now.</p>
         </div>
       </div>
     </section>
