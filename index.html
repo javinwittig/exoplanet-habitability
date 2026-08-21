@@ -40,15 +40,36 @@
 
   <!-- Scroll steps -->
   <main>
+    <!-- Intro: What is an Exoplanet? -->
+    <section class="step step-intro" data-step="-1">
+      <div class="card card-wide">
+        <p class="eyebrow">Before We Begin</p>
+        <h1>What is an exoplanet?</h1>
+        <p class="lede">An exoplanet — short for <em>extrasolar planet</em> — is any planet that orbits a star other than our Sun. Our solar system has eight planets, but the Milky Way holds hundreds of billions of stars, and many of them have their own planets. Since the first confirmed detection in 1992, astronomers have found over <strong>5,700</strong> exoplanets, with thousands more awaiting confirmation.</p>
+        <div class="detail-box">
+          <p class="detail-title">How do we find them?</p>
+          <p class="detail-text">We can't photograph most exoplanets directly — they're too faint next to their host stars. Instead, we detect them <em>indirectly</em>: the <strong>transit method</strong> watches for tiny dips in starlight as a planet crosses in front of its star, and <strong>radial velocity</strong> measures the wobble a planet's gravity induces in its star. Both methods yield measurements like orbital period, star temperature, and planet radius — the raw features our model trains on.</p>
+        </div>
+        <div class="detail-box">
+          <p class="detail-title">Why does it matter?</p>
+          <p class="detail-text">Finding habitable exoplanets is the first step toward answering whether we're alone in the universe. A planet in the <em>Habitable Zone</em> — where temperatures allow liquid water — is the most promising candidate for hosting life. But with thousands of candidates, astronomers need machine learning to sift through the data and flag the most promising worlds for further study.</p>
+        </div>
+      </div>
+    </section>
+
     <!-- Step 0: The Catalog -->
     <section class="step" data-step="0">
       <div class="card">
         <p class="eyebrow">Step 01 — The Catalog</p>
         <h1>1&#8202;715 known exoplanets.</h1>
-        <p class="lede">Every dot on this screen is a real, confirmed world discovered beyond our solar system — sourced directly from the NASA Exoplanet Archive. Two measurements define whether each of these planets could support life: <strong>how much starlight it receives</strong> (insolation) and <strong>how large it is</strong> (radius in Earth units).</p>
+        <p class="lede">Every dot on this screen is a real, confirmed world discovered beyond our solar system — sourced directly from the <strong>NASA Exoplanet Archive</strong> via its TAP API. The data is queried as a SQL statement against the <code>pscomppars</code> table, pulling nine measurements for each planet: orbital period, mass, insolation, radius, and five stellar properties.</p>
         <div class="detail-box">
-          <p class="detail-title">Why these two values?</p>
-          <p class="detail-text">A planet's radius tells us whether it's rocky like Earth or a gas giant like Jupiter. Insolation — the energy it gets from its star — tells us whether surface water could exist as liquid. Together, they define the <em>Habitable Zone</em>: the narrow band where life as we know it might be possible.</p>
+          <p class="detail-title">The raw query</p>
+          <p class="detail-text"><code>SELECT pl_orbper, pl_bmasse, pl_insol, pl_rade, st_teff, st_logg, st_rad, st_mass, sy_vmag FROM pscomppars</code> — this fetches every confirmed planet with complete measurements. After dropping rows with missing values in the key columns (insolation, radius), we're left with 1,715 worlds.</p>
+        </div>
+        <div class="detail-box">
+          <p class="detail-title">Defining "habitable"</p>
+          <p class="detail-text">A planet is labeled habitable if its insolation falls between <strong>0.25–1.5</strong> Earth units and its radius between <strong>0.5–1.6</strong> Earth radii. This captures the classic Habitable Zone: warm enough for liquid water, small enough to be rocky. Only <strong>0.6%</strong> of all planets meet these criteria — an extreme class imbalance the model has to deal with.</p>
         </div>
       </div>
     </section>
